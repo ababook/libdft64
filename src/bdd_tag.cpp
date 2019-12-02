@@ -22,7 +22,9 @@ BDDTag::BDDTag() {
 
 BDDTag::~BDDTag(){};
 
+// 创建一个节点(父，偏移开始，偏移结束)
 lb_type BDDTag::alloc_node(lb_type parent, tag_off begin, tag_off end) {
+  // 标签 = 查找表的长度（下一个位置）
   lb_type lb = nodes.size();
   if (lb < MAX_LB) {
     nodes.push_back(TagNode(parent, begin, end));
@@ -34,16 +36,23 @@ lb_type BDDTag::alloc_node(lb_type parent, tag_off begin, tag_off end) {
 
 lb_type BDDTag::insert_n_zeros(lb_type cur_lb, size_t num,
                                lb_type last_one_lb) {
-
+  // 位向量偏移逐渐减小
   while (num != 0) {
+    // nodes：标签索引树节点指针的表。
+    // 向左找下一个label及它的长度
     lb_type next = nodes[cur_lb].left;
     size_t next_size = nodes[next].get_seg_size();
+    // 如果根节点没有左子树
     if (next == 0) {
+      // 记录当前偏移
       tag_off off = nodes[cur_lb].seg.end;
+      // 创建新的标签记录这个污染偏移
       lb_type new_lb = alloc_node(last_one_lb, off, off + num);
+      // 把新的标签连入根的左子树
       nodes[cur_lb].left = new_lb;
       cur_lb = new_lb;
       num = 0;
+      // 如果新加入的长度比原来的长
     } else if (next_size > num) {
       tag_off off = nodes[cur_lb].seg.end;
       lb_type new_lb = alloc_node(last_one_lb, off, off + num);
@@ -51,6 +60,7 @@ lb_type BDDTag::insert_n_zeros(lb_type cur_lb, size_t num,
       cur_lb = new_lb;
       nodes[next].seg.begin = off + num;
       num = 0;
+      // 默认：层层向下找节点
     } else {
       cur_lb = next;
       num -= next_size;
@@ -65,6 +75,7 @@ lb_type BDDTag::insert_n_ones(lb_type cur_lb, size_t num, lb_type last_one_lb) {
   while (num != 0) {
     lb_type next = nodes[cur_lb].right;
     tag_off last_end = nodes[cur_lb].seg.end;
+    // 根节点没有右子树，创建
     if (next == 0) {
       tag_off off = last_end;
       lb_type new_lb = alloc_node(last_one_lb, off, off + num);
@@ -91,7 +102,9 @@ lb_type BDDTag::insert_n_ones(lb_type cur_lb, size_t num, lb_type last_one_lb) {
   }
   return cur_lb;
 }
-
+// lb_type:标签类型
+// tag_off:位向量类型
+// pos为类read函数的返回值，即读入了多少个字符。
 lb_type BDDTag::insert(tag_off pos) {
   lb_type cur_lb = insert_n_zeros(ROOT, pos, ROOT);
   cur_lb = insert_n_ones(cur_lb, 1, ROOT);
