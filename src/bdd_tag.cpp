@@ -33,10 +33,9 @@ lb_type BDDTag::alloc_node(lb_type parent, tag_off begin, tag_off end) {
     return ROOT;
   }
 }
-
 lb_type BDDTag::insert_n_zeros(lb_type cur_lb, size_t num,
                                lb_type last_one_lb) {
-  // 位向量偏移逐渐减小
+  // 来个一个num长度的字符串，不断向向左子树添0。
   while (num != 0) {
     // nodes：标签索引树节点指针的表。
     // 向左找下一个label及它的长度
@@ -52,16 +51,18 @@ lb_type BDDTag::insert_n_zeros(lb_type cur_lb, size_t num,
       nodes[cur_lb].left = new_lb;
       cur_lb = new_lb;
       num = 0;
-      // 如果新加入的长度比原来的长
+      // 如果新写入的内容比原来合并的变量短。
     } else if (next_size > num) {
       tag_off off = nodes[cur_lb].seg.end;
       lb_type new_lb = alloc_node(last_one_lb, off, off + num);
       nodes[cur_lb].left = new_lb;
       cur_lb = new_lb;
+      // 拆一下，把原来那个变量的祈使偏移后移。
       nodes[next].seg.begin = off + num;
       num = 0;
       // 默认：层层向下找节点
     } else {
+      // 逐个变量填入。
       cur_lb = next;
       num -= next_size;
     }
@@ -75,7 +76,7 @@ lb_type BDDTag::insert_n_ones(lb_type cur_lb, size_t num, lb_type last_one_lb) {
   while (num != 0) {
     lb_type next = nodes[cur_lb].right;
     tag_off last_end = nodes[cur_lb].seg.end;
-    // 根节点没有右子树，创建
+    // 当前节点没有右子树，创建
     if (next == 0) {
       tag_off off = last_end;
       lb_type new_lb = alloc_node(last_one_lb, off, off + num);
@@ -107,6 +108,7 @@ lb_type BDDTag::insert_n_ones(lb_type cur_lb, size_t num, lb_type last_one_lb) {
 // pos为类read函数的返回值，即读入了多少个字符。
 lb_type BDDTag::insert(tag_off pos) {
   lb_type cur_lb = insert_n_zeros(ROOT, pos, ROOT);
+  // 给当前标签添个右孩子（1）
   cur_lb = insert_n_ones(cur_lb, 1, ROOT);
   return cur_lb;
 }
@@ -119,7 +121,7 @@ void BDDTag::set_size(lb_type lb, size_t size) {
 }
 
 lb_type BDDTag::combine(lb_type l1, lb_type l2) {
-
+  // 相同处理
   if (l1 == 0)
     return l2;
   if (l2 == 0 || l1 == l2)
