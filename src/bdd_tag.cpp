@@ -126,11 +126,11 @@ lb_type BDDTag::combine(lb_type l1, lb_type l2) {
     return l2;
   if (l2 == 0 || l1 == l2)
     return l1;
-
+  // 处理标签超长情况
   bool has_len_lb = BDD_HAS_LEN_LB(l1) || BDD_HAS_LEN_LB(l2);
   l1 = l1 & LB_MASK;
   l2 = l2 & LB_MASK;
-
+  // 确保l1<l2
   if (l1 > l2) {
     lb_type tmp = l2;
     l2 = l1;
@@ -140,7 +140,7 @@ lb_type BDDTag::combine(lb_type l1, lb_type l2) {
   // get all the segments
   std::stack<lb_type> lb_st;
   lb_type last_begin = MAX_LB;
-
+  // 从后往前，上溯到第一个相同的节点，过程中的节点入栈。
   while (l1 > 0 && l1 != l2) {
     tag_off b1 = nodes[l1].seg.begin;
     tag_off b2 = nodes[l2].seg.begin;
@@ -165,7 +165,7 @@ lb_type BDDTag::combine(lb_type l1, lb_type l2) {
   } else {
     cur_lb = l2;
   }
-
+  // 根据栈中的内容，将后续的节点接入。
   while (!lb_st.empty()) {
     tag_seg cur_seg = nodes[cur_lb].seg;
     lb_type next = lb_st.top();
@@ -197,6 +197,7 @@ lb_type BDDTag::combine(lb_type l1, lb_type l2) {
   return cur_lb;
 }
 
+// 从后往前逐位找到位向量tag_list，最后反向。
 const std::vector<tag_seg> BDDTag::find(lb_type lb) {
 
   lb = lb & LB_MASK;
