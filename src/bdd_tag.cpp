@@ -105,7 +105,7 @@ lb_type BDDTag::insert_n_ones(lb_type cur_lb, size_t num, lb_type last_one_lb) {
 }
 // lb_type:标签类型
 // tag_off:位向量类型
-// pos为类read函数的返回值，即读入了多少个字符。
+// pos是1所在的位置，在遇到1之前补0。
 lb_type BDDTag::insert(tag_off pos) {
   lb_type cur_lb = insert_n_zeros(ROOT, pos, ROOT);
   // 给当前标签添个右孩子（1）
